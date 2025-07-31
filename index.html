@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Estrategia de Inversión a Largo Plazo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        input[type="number"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+        button {
+            grid-column: 1 / -1;
+            padding: 12px 20px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #fff;
+            background-color: #3498db;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px 12px;
+            text-align: right;
+            white-space: nowrap;
+        }
+        th {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .risk-analysis {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #fffbe6;
+            border-left: 5px solid #f39c12;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Simulador de Estrategia de Inversión 📈</h1>
+    <p>Introduce los parámetros de tu estrategia para calcular la distribución de la inversión, simular cada fase y determinar los precios de venta necesarios.</p>
+    
+    <div id="input-section">
+        <h2>Parámetros de la Simulación</h2>
+        <form id="simulationForm" class="form-grid">
+            <div class="form-group">
+                <label for="capitalMaximo">Capital Máximo Total (€):</label>
+                <input type="number" id="capitalMaximo" value="10000" step="1000">
+            </div>
+            <div class="form-group">
+                <label for="numRecompras">Nº de Recompras Adicionales:</label>
+                <input type="number" id="numRecompras" value="4">
+            </div>
+            <div class="form-group">
+                <label for="caidaRecompra">% Caída para Recompra (PCx):</label>
+                <input type="number" id="caidaRecompra" value="10" step="0.5">
+            </div>
+            <div class="form-group">
+                <label for="precioMinimo">Precio Mínimo de Compra (€):</label>
+                <input type="number" id="precioMinimo" value="5" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="gananciaDeseada">% Ganancia Adicional Deseado:</label>
+                <input type="number" id="gananciaDeseada" value="15" step="1">
+            </div>
+            <div class="form-group">
+                <label for="accionesGratuitas">% Acciones 'Gratuitas' a Conservar:</label>
+                <input type="number" id="accionesGratuitas" value="10" step="1">
+            </div>
+             <div class="form-group">
+                <label for="accionesIniciales">Acciones (Primera Compra):</label>
+                <input type="number" id="accionesIniciales" value="50">
+            </div>
+            <div class="form-group">
+                <label for="precioInicial">Precio por Acción (Primera Compra) (€):</label>
+                <input type="number" id="precioInicial" value="20" step="0.1">
+            </div>
+            <button type="button" onclick="runSimulation()">Calcular Simulación</button>
+        </form>
+    </div>
+
+    <div id="results-section">
+        <h2>Tabla de Resultados</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fase de Compra</th>
+                        <th>Acciones Compradas</th>
+                        <th>Acciones Totales</th>
+                        <th>Capital Restante (€)</th>
+                        <th>Acciones 'Gratuitas' (% y Cantidad)</th>
+                        <th>Precio de la Acción (€)</th>
+                        <th>Inversión en Fase (€)</th>
+                        <th>Inversión Acumulada (€)</th>
+                        <th>PPM (€)</th>
+                        <th>Precio Venta Necesario (€)</th>
+                        <th>Caída % (desde anterior)</th>
+                        <th>Acciones a Vender</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div id="riskAnalysisSection" class="risk-analysis" style="display:none;">
+        <h2>Análisis de Riesgos Clave</h2>
+        <div id="riskContent"></div>
+    </div>
+
+</div>
+
+<script>
+function formatCurrency(value) {
+    return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+}
+
+function formatNumber(value, decimals = 2) {
+    return value.toLocaleString('es-ES', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+function runSimulation() {
+    // 1. OBTENER PARÁMETROS DEL FORMULARIO
+    const capitalMaximo = parseFloat(document.getElementById('capitalMaximo').value);
+    const numRecompras = parseInt(document.getElementById('numRecompras').value);
+    const pcx = parseFloat(document.getElementById('caidaRecompra').value);
+    const precioMinimo = parseFloat(document.getElementById('precioMinimo').value);
+    const gananciaDeseada = parseFloat(document.getElementById('gananciaDeseada').value);
+    const porcAccionesGratuitas = parseFloat(document.getElementById('accionesGratuitas').value);
+    const accionesIniciales = parseFloat(document.getElementById('accionesIniciales').value);
+    const precioInicial = parseFloat(document.getElementById('precioInicial').value);
+
+    const resultsTableBody = document.getElementById('resultsTableBody');
+    resultsTableBody.innerHTML = ''; // Limpiar resultados anteriores
+
+    let capitalRestante = capitalMaximo;
+    let accionesTotales = 0;
+    let inversionAcumulada = 0;
+    let precioAnterior = 0;
+
+    // 2. FASE 0: PRIMERA COMPRA
+    const inversionInicial = accionesIniciales * precioInicial;
+    if (inversionInicial > capitalMaximo) {
+        resultsTableBody.innerHTML = `<tr><td colspan="12">Error: La inversión inicial (${formatCurrency(inversionInicial)}) excede el capital máximo total (${formatCurrency(capitalMaximo)}).</td></tr>`;
+        return;
+    }
+
+    capitalRestante -= inversionInicial;
+    accionesTotales = accionesIniciales;
+    inversionAcumulada = inversionInicial;
+    let ppm = precioInicial;
+    precioAnterior = precioInicial;
+
+    // Calcular objetivos de venta para la Fase 0
+    let capitalObjetivo = inversionAcumulada * (1 + gananciaDeseada / 100);
+    let cantidadAccionesGratuitas = accionesTotales * (porcAccionesGratuitas / 100);
+    let accionesAVender = accionesTotales - cantidadAccionesGratuitas;
+    let precioVentaNecesario = accionesAVender > 0 ? capitalObjetivo / accionesAVender : 0;
+    
+    // Añadir fila a la tabla
+    let newRow = `<tr>
+        <td>Primera Compra</td>
+        <td>${formatNumber(accionesIniciales, 0)}</td>
+        <td>${formatNumber(accionesTotales, 2)}</td>
+        <td>${formatCurrency(capitalRestante)}</td>
+        <td>${porcAccionesGratuitas}% (${formatNumber(cantidadAccionesGratuitas, 2)})</td>
+        <td>${formatCurrency(precioInicial)}</td>
+        <td>${formatCurrency(inversionInicial)}</td>
+        <td>${formatCurrency(inversionAcumulada)}</td>
+        <td>${formatCurrency(ppm)}</td>
+        <td><b>${formatCurrency(precioVentaNecesario)}</b></td>
+        <td>-</td>
+        <td>${formatNumber(accionesAVender, 2)}</td>
+    </tr>`;
+    resultsTableBody.innerHTML += newRow;
+
+
+    // 3. FASES DE RECOMPRA (PC1, PC2, ...)
+    for (let i = 1; i <= numRecompras; i++) {
+        const precioRecompra = precioAnterior * (1 - pcx / 100);
+
+        if (precioRecompra < precioMinimo) {
+            resultsTableBody.innerHTML += `<tr><td colspan="12">Fase PC${i} cancelada: El precio (${formatCurrency(precioRecompra)}) es inferior al mínimo de compra (${formatCurrency(precioMinimo)}).</td></tr>`;
+            break;
+        }
+
+        const recomprasRestantes = (numRecompras - i) + 1;
+        let inversionEnFase = capitalRestante / recomprasRestantes;
+
+        if (inversionEnFase <= 0) {
+            resultsTableBody.innerHTML += `<tr><td colspan="12">Fase PC${i} cancelada: Capital insuficiente para continuar.</td></tr>`;
+            break;
+        }
+        
+        const accionesCompradas = inversionEnFase / precioRecompra;
+
+        // Actualizar totales
+        capitalRestante -= inversionEnFase;
+        accionesTotales += accionesCompradas;
+        inversionAcumulada += inversionEnFase;
+        ppm = inversionAcumulada / accionesTotales;
+        precioAnterior = precioRecompra;
+
+        // Calcular objetivos de venta para la fase actual
+        capitalObjetivo = inversionAcumulada * (1 + gananciaDeseada / 100);
+        cantidadAccionesGratuitas = accionesTotales * (porcAccionesGratuitas / 100);
+        accionesAVender = accionesTotales - cantidadAccionesGratuitas;
+        precioVentaNecesario = accionesAVender > 0 ? capitalObjetivo / accionesAVender : 0;
+
+        // Añadir fila a la tabla
+        newRow = `<tr>
+            <td>Recompra PC${i}</td>
+            <td>${formatNumber(accionesCompradas, 2)}</td>
+            <td>${formatNumber(accionesTotales, 2)}</td>
+            <td>${formatCurrency(capitalRestante)}</td>
+            <td>${porcAccionesGratuitas}% (${formatNumber(cantidadAccionesGratuitas, 2)})</td>
+            <td>${formatCurrency(precioRecompra)}</td>
+            <td>${formatCurrency(inversionEnFase)}</td>
+            <td>${formatCurrency(inversionAcumulada)}</td>
+            <td>${formatCurrency(ppm)}</td>
+            <td><b>${formatCurrency(precioVentaNecesario)}</b></td>
+            <td>${formatNumber(pcx)}%</td>
+            <td>${formatNumber(accionesAVender, 2)}</td>
+        </tr>`;
+        resultsTableBody.innerHTML += newRow;
+    }
+    
+    // 4. MOSTRAR ANÁLISIS DE RIESGOS
+    document.getElementById('riskAnalysisSection').style.display = 'block';
+    document.getElementById('riskContent').innerHTML = `
+        <ul>
+            <li><strong>Gestión del Capital:</strong> La estrategia distribuye el capital restante entre las recompras futuras planificadas. Si una caída es muy profunda y rápida, podrías agotar el capital antes de completar todas las fases de recompra deseadas. El capital restante de <strong>${formatCurrency(capitalRestante)}</strong> muestra lo que quedaría si todas las fases se ejecutan.</li>
+            <li><strong>Riesgo de Concentración:</strong> Al invertir repetidamente en un único activo que está cayendo, aumentas la concentración y el riesgo específico de esa empresa o sector. Una falta de recuperación a largo plazo podría resultar en una pérdida significativa del capital invertido.</li>
+            <li><strong>Dependencia de la Recuperación (Riesgo "No Vender con Pérdidas"):</strong> El principio de no vender por debajo del Precio Promedio de Compra (PPM) te protege de realizar pérdidas, pero te ata al activo indefinidamente si no recupera su valor. El capital permanece bloqueado, generando un alto coste de oportunidad. El éxito de la estrategia depende 100% de que el precio del activo eventualmente supere tu <strong>Precio de Venta Necesario</strong>.</li>
+             <li><strong>Riesgo de "Cuchillo que Cae" (Catching a Falling Knife):</strong> Comprar activos en caídas sucesivas es arriesgado. Si la caída se debe a problemas fundamentales del activo (y no a una corrección de mercado), el precio podría no recuperarse nunca, invalidando la premisa de la estrategia.</li>
+        </ul>
+    `;
+}
+
+// Ejecutar una simulación inicial al cargar la página con los valores por defecto
+window.onload = runSimulation;
+</script>
+
+</body>
+</html>

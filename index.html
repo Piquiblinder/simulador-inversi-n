@@ -168,8 +168,6 @@
 </div>
 
 <script>
-// No hay variable global para Chart.js ya que se eliminó la gráfica
-
 function formatCurrency(value) {
     return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
 }
@@ -194,9 +192,6 @@ function runSimulation() {
     const resultsTableBody = document.getElementById('resultsTableBody');
     resultsTableBody.innerHTML = ''; // Limpiar resultados anteriores
 
-    // Limpiar y ocultar el análisis de riesgos
-    document.getElementById('riskAnalysisSection').style.display = 'none';
-
     // Basic input validation
     if (isNaN(capitalMaximo) || capitalMaximo <= 0 ||
         isNaN(pcx) || pcx <= 0 || pcx >= 100 || 
@@ -206,6 +201,7 @@ function runSimulation() {
         isNaN(accionesIniciales) || accionesIniciales <= 0 ||
         isNaN(precioInicial) || precioInicial <= 0) {
         resultsTableBody.innerHTML = `<tr><td colspan="13" style="color: red; text-align: center;">Error: Por favor, introduce valores válidos y positivos en todos los campos. Los porcentajes deben estar entre 0 y 100 (excluyendo 100).</td></tr>`;
+        document.getElementById('riskAnalysisSection').style.display = 'none';
         return;
     }
 
@@ -220,6 +216,7 @@ function runSimulation() {
     const inversionInicial = accionesIniciales * precioInicial;
     if (inversionInicial > capitalMaximo) {
         resultsTableBody.innerHTML = `<tr><td colspan="13" style="color: red; text-align: center;">Error: La inversión inicial (${formatCurrency(inversionInicial)}) excede el capital máximo total (${formatCurrency(capitalMaximo)}).</td></tr>`;
+        document.getElementById('riskAnalysisSection').style.display = 'none';
         return;
     }
 
@@ -238,7 +235,7 @@ function runSimulation() {
     let gananciaTotalEsperada = capitalObjetivo - inversionAcumulada;
     if (gananciaTotalEsperada < 0) gananciaTotalEsperada = 0; 
 
-    // Añadir datos para la tabla
+    // Añadir fila a la tabla
     let newRow = `<tr>
         <td>Primera Compra</td>
         <td>${formatNumber(accionesIniciales, 0)}</td>
@@ -257,59 +254,48 @@ function runSimulation() {
     resultsTableBody.innerHTML += newRow;
 
 
-    // 3. FASES DE RECOMPRA (PC1, PC2, ...) - Ahora distribuyendo el capital
+    // 3. FASES DE RECOMPRA (PC1, PC2, ...) - Ahora dinámico
     while (true) {
         const proximoPrecioRecompra = precioAnterior * (1 - pcx / 100);
 
-        // Criterios de parada principales
+        // Pre-chequeo antes de intentar la recompra
         if (proximoPrecioRecompra < precioMinimo) {
             resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: El precio de recompra proyectado (${formatCurrency(proximoPrecioRecompra)}) es inferior al mínimo de compra (${formatCurrency(precioMinimo)}).</td></tr>`;
             break;
         }
 
-        // Calcular cuántas recompras futuras "teóricas" son posibles
-        // Esto es crucial para distribuir el capital restante.
-        let tempPrecioParaCalculo = proximoPrecioRecompra;
-        let recomprasPotencialesRestantes = 0;
-        let capitalNecesarioParaSiguienteCompra = proximoPrecioRecompra; // Mínimo para una acción
-        
-        // Loop para estimar cuántas compras más se pueden hacer hasta el precio mínimo.
-        // Se considera que cada "recompra potencial" necesitará al menos el coste de una acción a ese precio.
-        while (tempPrecioParaCalculo >= precioMinimo && recomprasPotencialesRestantes < 1000) { // Límite para evitar bucles infinitos
-            recomprasPotencialesRestantes++;
-            tempPrecioParaCalculo *= (1 - pcx / 100);
-            if (tempPrecioParaCalculo < 0.01) break; // Si el precio se vuelve insignificante, salir
-        }
-        
-        // Si no hay recompras potenciales, o si el capital es demasiado bajo para la primera de ellas
-        if (recomprasPotencialesRestantes === 0 || capitalRestante < capitalNecesarioParaSiguienteCompra) {
-            resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Capital insuficiente o no hay más recompras viables. Capital restante: ${formatCurrency(capitalRestante)}.</td></tr>`;
+        // Determinar capital para la siguiente compra
+        // Asignamos todo el capital restante si solo queda para una recompra,
+        // o un mínimo predefinido para evitar divisiones muy pequeñas y prolongar el bucle excesivamente.
+        // Para este caso, vamos a asumir que cada recompra usa el capital restante.
+        let inversionEnFase;
+        if (capitalRestante > 0) {
+            // Esta lógica simplificada hace que la próxima recompra use todo el capital restante.
+            // Si queremos una distribución más "uniforme", se necesitaría estimar cuántas recompras más
+            // podrían ocurrir antes de agotar capital o llegar al precio mínimo.
+            // Para "el máximo posible y viable" sin un número fijo de recompras,
+            // simplemente usaremos todo el capital restante que permita comprar al menos 1 acción.
+            inversionEnFase = capitalRestante; 
+            
+            // Si el capital restante es demasiado bajo para comprar incluso 1 acción al proximoPrecioRecompra
+            if (inversionEnFase < proximoPrecioRecompra) {
+                 resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Capital insuficiente para comprar acciones adicionales al precio de ${formatCurrency(proximoPrecioRecompra)}.</td></tr>`;
+                 break;
+            }
+        } else {
+            resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Capital agotado.</td></tr>`;
             break;
         }
-
-        recompraCount++;
-
-        // Determinar la inversión para esta fase: distribuir el capital restante
-        // entre las recompras potenciales estimadas.
-        let inversionEnFase = capitalRestante / recomprasPotencialesRestantes;
-        
-        // Asegurarse de que al menos se pueda comprar una acción si hay capital suficiente
-        if (inversionEnFase < proximoPrecioRecompra && capitalRestante >= proximoPrecioRecompra) {
-            inversionEnFase = proximoPrecioRecompra; // Invertir al menos para 1 acción
-        } else if (inversionEnFase < proximoPrecioRecompra && capitalRestante < proximoPrecioRecompra) {
-            // Si el capital no alcanza para una acción, se termina la simulación
-            resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Capital insuficiente para comprar más acciones al precio de ${formatCurrency(proximoPrecioRecompra)}.</td></tr>`;
-            break;
-        }
-
 
         const accionesCompradas = inversionEnFase / proximoPrecioRecompra;
         
-        // Si la cantidad de acciones compradas es insignificante, detener.
-        if (accionesCompradas < 0.0001) { 
-             resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Cantidad de acciones a comprar insignificante.</td></tr>`;
+        // Si las acciones compradas son insignificantes, detener
+        if (accionesCompradas < 0.001 && capitalRestante < proximoPrecioRecompra) { // Considerar un umbral muy pequeño
+             resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Cantidad de acciones a comprar insignificante o capital agotado para compras futuras.</td></tr>`;
              break;
         }
+
+        recompraCount++;
 
         // Actualizar totales
         capitalRestante -= inversionEnFase;
@@ -327,7 +313,7 @@ function runSimulation() {
         gananciaTotalEsperada = capitalObjetivo - inversionAcumulada;
         if (gananciaTotalEsperada < 0) gananciaTotalEsperada = 0; 
 
-        // Añadir datos para la tabla
+        // Añadir fila a la tabla
         newRow = `<tr>
             <td>Recompra PC${recompraCount}</td>
             <td>${formatNumber(accionesCompradas, 2)}</td>
@@ -350,7 +336,7 @@ function runSimulation() {
     document.getElementById('riskAnalysisSection').style.display = 'block';
     document.getElementById('riskContent').innerHTML = `
         <ul>
-            <li><strong>Gestión del Capital:</strong> La estrategia ahora distribuye el capital de manera que se maximicen las recompras posibles hasta que se agote el capital o se alcance el precio mínimo. El capital restante final es de <strong>${formatCurrency(capitalRestante)}</strong>, que es el remanente no utilizado.</li>
+            <li><strong>Gestión del Capital:</strong> La estrategia ahora realiza el máximo número de recompras posibles, invirtiendo el capital restante en cada fase. Esto significa que todo el capital máximo (${formatCurrency(capitalMaximo)}) se asignará a compras hasta agotar el fondo o alcanzar el precio mínimo. El capital restante final es de <strong>${formatCurrency(capitalRestante)}</strong>, que es el remanente no utilizado o no asignable.</li>
             <li><strong>Riesgo de Concentración:</strong> Al invertir repetidamente en un único activo que está cayendo, aumentas la concentración y el riesgo específico de esa empresa o sector. Una falta de recuperación a largo plazo podría resultar en una pérdida significativa del capital invertido.</li>
             <li><strong>Dependencia de la Recuperación (Riesgo "No Vender con Pérdidas"):</strong> El principio de no vender por debajo del Precio Promedio de Compra (PPM) te protege de realizar pérdidas, pero te ata al activo indefinidamente si no recupera su valor. El capital permanece bloqueado, generando un alto coste de oportunidad. El éxito de la estrategia depende 100% de que el precio del activo eventualmente supere tu <strong>Precio de Venta Necesario</strong>.</li>
              <li><strong>Riesgo de "Cuchillo que Cae" (Catching a Falling Knife):</strong> Comprar activos en caídas sucesivas es arriesgado. Si la caída se debe a problemas fundamentales del activo (y no a una corrección de mercado), el precio podría no recuperarse nunca, invalidando la premisa de la estrategia.</li>

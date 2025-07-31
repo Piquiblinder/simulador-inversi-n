@@ -183,6 +183,59 @@
         .margin-call-row td {
             color: white !important;
         }
+
+        /* --- ESTILOS RESPONSIVOS PARA MÓVILES Y TABLETAS --- */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px; /* Menos espacio en los bordes de la pantalla */
+                font-size: 16px; /* Asegura un tamaño de fuente base legible */
+            }
+
+            .container {
+                padding: 15px; /* Menos padding dentro del contenedor principal */
+            }
+
+            h1 {
+                font-size: 1.7em; /* Tamaño de título más adecuado para móviles */
+            }
+
+            h2 {
+                font-size: 1.4em;
+            }
+
+            /* El grid del formulario ya es responsivo por `auto-fill` y `minmax` */
+            .form-grid {
+                gap: 20px; /* Espacio ligeramente menor entre campos */
+            }
+            
+            label {
+                font-size: 0.9em;
+            }
+            
+            input[type="number"],
+            select {
+                padding: 14px; /* Facilita el toque en pantallas táctiles */
+            }
+
+            button {
+                font-size: 1.1em;
+            }
+            
+            /* Indicador visual para que el usuario sepa que la tabla es deslizable */
+            .table-container::before {
+                content: '« Desliza la tabla para ver todas las columnas »';
+                display: block;
+                text-align: center;
+                margin-bottom: 12px;
+                font-size: 0.85em;
+                color: #f39c12;
+                font-style: italic;
+            }
+
+            th, td {
+                padding: 10px 8px; /* Compacta un poco más las celdas de la tabla */
+            }
+        }
     </style>
 </head>
 <body onload="updateLabels()">
@@ -194,6 +247,7 @@
         <div id="input-section">
             <h2>Parámetros de la Simulación</h2>
             <form id="simulationForm" class="form-grid" onsubmit="event.preventDefault(); runSimulation();">
+                <!-- El resto de tu formulario HTML aquí (sin cambios) -->
                 <div class="form-group">
                     <label for="assetType">Tipo de Activo:</label>
                     <select id="assetType" onchange="updateLabels()">
@@ -312,7 +366,8 @@
                     />
                 </div>
                 <div class="form-group futures-field" style="display: none;" title="Campos específicos para futuros">
-                    <label for="valorTick" id="labelValorTick">Valor del Tick (€):</label>
+                    <label for="valorTick" id="labelValorTick">Valor del Tick (€):</label
+                    >
                     <input
                         type="number"
                         id="valorTick"
@@ -391,6 +446,8 @@
     </div>
 
     <script>
+        // El código Javascript no necesita cambios para la responsividad,
+        // por lo que se mantiene igual que en la versión anterior.
         "use strict";
 
         // -----------------------
@@ -438,27 +495,23 @@
                 document.getElementById("groupFixedPctInitialCapital").style.display =
                     "flex";
             }
-            // 'distributeCapital' y 'growingUnits' no requieren inputs extras
         }
 
         // -----------------------
-        // ACTUALIZAR ETIQUETAS Y VISIBILIDAD SEGÚN TIPO DE ACTIVO Y OPERACIÓN
+        // ACTUALIZAR ETIQUETAS Y VISIBILIDAD
         // -----------------------
         function updateLabels() {
             const assetType = document.getElementById("assetType").value;
             const operationTypeSelect = document.getElementById("operationType");
             const operationTypeGroup = document.getElementById("operationTypeGroup");
             const body = document.body;
-
             const groupPorcUnidadesARetener = document.getElementById(
                 "groupPorcUnidadesARetener"
             );
             const porcUnidadesARetenerInput = document.getElementById(
                 "porcUnidadesARetener"
             );
-
             const futuresFields = document.querySelectorAll(".futures-field");
-
             let currentOperationType;
 
             if (assetType === "futuros") {
@@ -467,7 +520,7 @@
                 futuresFields.forEach((field) => (field.style.display = "flex"));
             } else {
                 operationTypeGroup.style.display = "none";
-                currentOperationType = "long"; // Sólo long para acciones
+                currentOperationType = "long";
                 futuresFields.forEach((field) => (field.style.display = "none"));
             }
 
@@ -493,8 +546,6 @@
                     "% Acciones en Stake (Sin Coste):";
             }
 
-
-            // Valores y etiquetas por defecto según tipo y operación
             document.getElementById("labelGananciaDeseada").textContent =
                 "% Ganancia Deseada en € (al cerrar):";
             document.getElementById("capitalMaximo").value = 1000;
@@ -506,22 +557,15 @@
                 document.getElementById("precioInicial").value = 10;
                 document.getElementById("fixedUnitsToAdd").value = 10;
                 document.getElementById("fixedPctInitialCapitalToAdd").value = 10;
-
-                document.getElementById("labelCapitalMaximo").textContent =
-                    "Capital Máximo Total (€):";
-                document.getElementById("labelPctCambio").textContent =
-                    "% Caída para Añadir Posición:";
-                document.getElementById("labelPrecioLimite").textContent =
-                    "Precio Límite de Compra (€):";
-                document.getElementById("labelUnidadesIniciales").textContent =
-                    "Acciones Iniciales (1ª Compra):";
-                document.getElementById("labelPrecioInicial").textContent =
-                    "Precio Inicial por Acción (1ª Compra) (€):";
+                document.getElementById("labelCapitalMaximo").textContent = "Capital Máximo Total (€):";
+                document.getElementById("labelPctCambio").textContent = "% Caída para Añadir Posición:";
+                document.getElementById("labelPrecioLimite").textContent = "Precio Límite de Compra (€):";
+                document.getElementById("labelUnidadesIniciales").textContent = "Acciones Iniciales (1ª Compra):";
+                document.getElementById("labelPrecioInicial").textContent = "Precio Inicial por Acción (1ª Compra) (€):";
             } else {
                 document.getElementById("unidadesIniciales").value = 1;
                 document.getElementById("fixedUnitsToAdd").value = 1;
                 document.getElementById("fixedPctInitialCapitalToAdd").value = 15;
-
                 if (currentOperationType === "long") {
                     document.getElementById("pctCambio").value = 5;
                     document.getElementById("precioLimite").value = 90;
@@ -531,17 +575,11 @@
                     document.getElementById("comisionContrato").value = 2.5;
                     document.getElementById("tamanoTick").value = 0.25;
                     document.getElementById("valorTick").value = 12.5;
-
-                    document.getElementById("labelCapitalMaximo").textContent =
-                        "Capital/Margen Máximo Total (€):";
-                    document.getElementById("labelPctCambio").textContent =
-                        "% Caída para Añadir (Long):";
-                    document.getElementById("labelPrecioLimite").textContent =
-                        "Precio Límite de Compra (Long) (€):";
-                    document.getElementById("labelUnidadesIniciales").textContent =
-                        "Contratos Iniciales (1ª Operación):";
-                    document.getElementById("labelPrecioInicial").textContent =
-                        "Precio Inicial por Contrato (1ª Operación) (€):";
+                    document.getElementById("labelCapitalMaximo").textContent = "Capital/Margen Máximo Total (€):";
+                    document.getElementById("labelPctCambio").textContent = "% Caída para Añadir (Long):";
+                    document.getElementById("labelPrecioLimite").textContent = "Precio Límite de Compra (Long) (€):";
+                    document.getElementById("labelUnidadesIniciales").textContent = "Contratos Iniciales (1ª Operación):";
+                    document.getElementById("labelPrecioInicial").textContent = "Precio Inicial por Contrato (1ª Operación) (€):";
                 } else {
                     document.getElementById("pctCambio").value = 5;
                     document.getElementById("precioLimite").value = 110;
@@ -551,83 +589,34 @@
                     document.getElementById("comisionContrato").value = 2.5;
                     document.getElementById("tamanoTick").value = 0.25;
                     document.getElementById("valorTick").value = 12.5;
-
-                    document.getElementById("labelCapitalMaximo").textContent =
-                        "Capital/Margen Máximo Total (€):";
-                    document.getElementById("labelPctCambio").textContent =
-                        "% Subida para Añadir (Short):";
-                    document.getElementById("labelPrecioLimite").textContent =
-                        "Precio Límite de Venta (Short) (€):";
-                    document.getElementById("labelUnidadesIniciales").textContent =
-                        "Contratos Iniciales (1ª Operación):";
-                    document.getElementById("labelPrecioInicial").textContent =
-                        "Precio Inicial por Contrato (1ª Operación) (€):";
+                    document.getElementById("labelCapitalMaximo").textContent = "Capital/Margen Máximo Total (€):";
+                    document.getElementById("labelPctCambio").textContent = "% Subida para Añadir (Short):";
+                    document.getElementById("labelPrecioLimite").textContent = "Precio Límite de Venta (Short) (€):";
+                    document.getElementById("labelUnidadesIniciales").textContent = "Contratos Iniciales (1ª Operación):";
+                    document.getElementById("labelPrecioInicial").textContent = "Precio Inicial por Contrato (1ª Operación) (€):";
                 }
             }
-
-            // Actualizar encabezados tabla dinámicamente
             renderTableHeaders(assetType, currentOperationType);
-
             toggleAdditionFields();
         }
 
-        // Renderización dinámica encabezados tabla según tipo y operación
         function renderTableHeaders(assetType, operationType) {
             const tableHeaders = document.getElementById("tableHeaders");
             tableHeaders.innerHTML = "";
-
-            const headersAcciones = [
-                "Fase de Operación",
-                "Acciones Añadidas",
-                "Acciones Totales",
-                "Capital Restante (€)",
-                "Acciones en Stake (Sin Coste)",
-                "Precio por Acción (€)",
-                "Inversión en Fase (€)",
-                "Inversión Acumulada (€)",
-                "PPM (€)",
-                "Precio Venta Necesario (€)",
-                "Ganancia Total al Vender (€)",
-                "Caída % (desde anterior)",
-                "Acciones a Vender",
-            ];
-            const headersFuturos = [
-                "Fase de Operación",
-                "Unidades Añadidas",
-                "Contratos Totales",
-                "Capital/Margen Restante (€)",
-                "Margen Req. Actual (€)",
-                "Precio por Unidad (€)",
-                "Margen Usado en Fase (€)",
-                "Margen Acum. Usado (€)",
-                "PPMS (€)",
-                "Precio Cobertura Necesario (€)",
-                "Ganancia Total al Cubrir (€)",
-                "Subida % (desde anterior)",
-                "Unidades a Cubrir",
-            ];
-
-            let headersToUse =
-                assetType === "acciones" ? headersAcciones : headersFuturos;
-
-            // Limpiar y crear th elementos
+            const headersAcciones = [ "Fase de Operación", "Acciones Añadidas", "Acciones Totales", "Capital Restante (€)", "Acciones en Stake (Sin Coste)", "Precio por Acción (€)", "Inversión en Fase (€)", "Inversión Acumulada (€)", "PPM (€)", "Precio Venta Necesario (€)", "Ganancia Total al Vender (€)", "Caída % (desde anterior)", "Acciones a Vender", ];
+            const headersFuturos = [ "Fase de Operación", "Unidades Añadidas", "Contratos Totales", "Capital/Margen Restante (€)", "Margen Req. Actual (€)", "Precio por Unidad (€)", "Margen Usado en Fase (€)", "Margen Acum. Usado (€)", "PPMS (€)", "Precio Cobertura Necesario (€)", "Ganancia Total al Cubrir (€)", "Subida % (desde anterior)", "Unidades a Cubrir", ];
+            let headersToUse = assetType === "acciones" ? headersAcciones : headersFuturos;
             headersToUse.forEach((header) => {
                 const th = document.createElement("th");
                 th.textContent = header;
-                // Para alinear texto a la izquierda en la primera columna
                 if (header === "Fase de Operación") {
                     th.style.textAlign = "left";
                 }
                 tableHeaders.appendChild(th);
             });
-
-            // Guardamos para usar cols count en msg de error/aviso
             tableHeaders.dataset.columns = headersToUse.length;
         }
 
-        // -----------------------
-        // RENDER FILAS DE RESULTADO
-        // -----------------------
         function addResultRow(cellsContentArray, isMarginCall = false) {
             const tbody = document.getElementById("resultsTableBody");
             const tr = document.createElement("tr");
@@ -636,15 +625,13 @@
             }
             cellsContentArray.forEach((text, idx) => {
                 const td = document.createElement("td");
-                td.innerHTML = text; // Si usas HTML en algún campo (negrita, etc.)
-                // Primera columna alineada a la izquierda para mejor lectura
+                td.innerHTML = text;
                 if (idx === 0) td.style.textAlign = "left";
                 tr.appendChild(td);
             });
             tbody.appendChild(tr);
         }
 
-        // Para agregar filas de mensaje que ocupen todo el ancho de la tabla
         function addMessageRow(message, messageType = "info") {
             const tbody = document.getElementById("resultsTableBody");
             const tr = document.createElement("tr");
@@ -653,7 +640,6 @@
             td.colSpan = colspan;
             td.style.textAlign = "center";
             td.style.fontWeight = "bold";
-
             if (messageType === "error") {
                 td.style.color = "red";
             } else if (messageType === "warning") {
@@ -666,171 +652,60 @@
             tbody.appendChild(tr);
         }
 
-        // -----------------------
-        // LÓGICA PRINCIPAL DE SIMULACIÓN
-        // -----------------------
         function runSimulation() {
             const assetType = document.getElementById("assetType").value;
-            const operationType =
-                assetType === "acciones"
-                    ? "long"
-                    : document.getElementById("operationType").value;
-            const additionStrategy =
-                document.getElementById("additionStrategy").value;
-
-            let capitalMaximo = parseFloat(
-                document.getElementById("capitalMaximo").value
-            );
+            const operationType = assetType === "acciones" ? "long" : document.getElementById("operationType").value;
+            const additionStrategy = document.getElementById("additionStrategy").value;
+            let capitalMaximo = parseFloat(document.getElementById("capitalMaximo").value);
             const pctCambio = parseFloat(document.getElementById("pctCambio").value);
-            let precioLimite = parseFloat(
-                document.getElementById("precioLimite").value
-            );
-            const gananciaDeseada = parseFloat(
-                document.getElementById("gananciaDeseada").value
-            );
-            const porcUnidadesARetener =
-                assetType === "acciones"
-                    ? parseFloat(document.getElementById("porcUnidadesARetener").value)
-                    : 0;
-            const unidadesIniciales = parseFloat(
-                document.getElementById("unidadesIniciales").value
-            );
-            let precioInicial = parseFloat(
-                document.getElementById("precioInicial").value
-            );
-
-            const margenInicialContrato =
-                assetType === "futuros"
-                    ? parseFloat(document.getElementById("margenInicialContrato").value)
-                    : 0;
-            const margenMantenimientoContrato =
-                assetType === "futuros"
-                    ? parseFloat(
-                          document.getElementById("margenMantenimientoContrato").value
-                      )
-                    : 0;
-            const comisionContrato =
-                assetType === "futuros"
-                    ? parseFloat(document.getElementById("comisionContrato").value)
-                    : 0;
-            const tamanoTick =
-                assetType === "futuros"
-                    ? parseFloat(document.getElementById("tamanoTick").value)
-                    : 0;
-            const valorTick =
-                assetType === "futuros"
-                    ? parseFloat(document.getElementById("valorTick").value)
-                    : 0;
-
-            const fixedUnitsToAdd = parseFloat(
-                document.getElementById("fixedUnitsToAdd").value
-            );
-            const fixedPctInitialCapitalToAdd = parseFloat(
-                document.getElementById("fixedPctInitialCapitalToAdd").value
-            );
-
-            const resultsTableBody =
-                document.getElementById("resultsTableBody");
-            resultsTableBody.innerHTML = ""; // Limpiar tabla
-
-            // --- VALIDACIONES BÁSICAS ---
-            if (
-                isNaN(capitalMaximo) ||
-                capitalMaximo <= 0 ||
-                isNaN(pctCambio) ||
-                pctCambio <= 0 ||
-                pctCambio >= 100 ||
-                isNaN(precioLimite) ||
-                precioLimite <= 0 ||
-                isNaN(gananciaDeseada) ||
-                gananciaDeseada <= 0 ||
-                isNaN(unidadesIniciales) ||
-                unidadesIniciales <= 0 ||
-                isNaN(precioInicial) ||
-                precioInicial <= 0
-            ) {
-                addMessageRow(
-                    "Error: Por favor, introduce valores válidos y positivos en todos los campos. Los porcentajes deben estar entre 0.1 y 99.9.",
-                    "error"
-                );
+            let precioLimite = parseFloat(document.getElementById("precioLimite").value);
+            const gananciaDeseada = parseFloat(document.getElementById("gananciaDeseada").value);
+            const porcUnidadesARetener = assetType === "acciones" ? parseFloat(document.getElementById("porcUnidadesARetener").value) : 0;
+            const unidadesIniciales = parseFloat(document.getElementById("unidadesIniciales").value);
+            let precioInicial = parseFloat(document.getElementById("precioInicial").value);
+            const margenInicialContrato = assetType === "futuros" ? parseFloat(document.getElementById("margenInicialContrato").value) : 0;
+            const margenMantenimientoContrato = assetType === "futuros" ? parseFloat(document.getElementById("margenMantenimientoContrato").value) : 0;
+            const comisionContrato = assetType === "futuros" ? parseFloat(document.getElementById("comisionContrato").value) : 0;
+            const tamanoTick = assetType === "futuros" ? parseFloat(document.getElementById("tamanoTick").value) : 0;
+            const valorTick = assetType === "futuros" ? parseFloat(document.getElementById("valorTick").value) : 0;
+            const fixedUnitsToAdd = parseFloat(document.getElementById("fixedUnitsToAdd").value);
+            const fixedPctInitialCapitalToAdd = parseFloat(document.getElementById("fixedPctInitialCapitalToAdd").value);
+            const resultsTableBody = document.getElementById("resultsTableBody");
+            resultsTableBody.innerHTML = "";
+            if (isNaN(capitalMaximo) || capitalMaximo <= 0 || isNaN(pctCambio) || pctCambio <= 0 || pctCambio >= 100 || isNaN(precioLimite) || precioLimite <= 0 || isNaN(gananciaDeseada) || gananciaDeseada <= 0 || isNaN(unidadesIniciales) || unidadesIniciales <= 0 || isNaN(precioInicial) || precioInicial <= 0) {
+                addMessageRow("Error: Por favor, introduce valores válidos y positivos en todos los campos. Los porcentajes deben estar entre 0.1 y 99.9.", "error");
                 document.getElementById("riskAnalysisSection").style.display = "none";
                 return;
             }
-
-            if (
-                assetType === "acciones" &&
-                (isNaN(porcUnidadesARetener) ||
-                    porcUnidadesARetener < 0 ||
-                    porcUnidadesARetener >= 100)
-            ) {
-                addMessageRow(
-                    "Error: El porcentaje de acciones en stake debe ser un valor válido entre 0 y 99.9.",
-                    "error"
-                );
+            if (assetType === "acciones" && (isNaN(porcUnidadesARetener) || porcUnidadesARetener < 0 || porcUnidadesARetener >= 100)) {
+                addMessageRow("Error: El porcentaje de acciones en stake debe ser un valor válido entre 0 y 99.9.", "error");
                 document.getElementById("riskAnalysisSection").style.display = "none";
                 return;
             }
-
             if (assetType === "futuros") {
-                if (
-                    isNaN(margenInicialContrato) ||
-                    margenInicialContrato <= 0 ||
-                    isNaN(margenMantenimientoContrato) ||
-                    margenMantenimientoContrato <= 0 ||
-                    isNaN(comisionContrato) ||
-                    comisionContrato < 0 ||
-                    isNaN(tamanoTick) ||
-                    tamanoTick <= 0 ||
-                    isNaN(valorTick) ||
-                    valorTick <= 0
-                ) {
-                    addMessageRow(
-                        "Error: Por favor, introduce valores válidos y positivos para los campos de Futuros (Margen, Comisión, Tick).",
-                        "error"
-                    );
+                if (isNaN(margenInicialContrato) || margenInicialContrato <= 0 || isNaN(margenMantenimientoContrato) || margenMantenimientoContrato <= 0 || isNaN(comisionContrato) || comisionContrato < 0 || isNaN(tamanoTick) || tamanoTick <= 0 || isNaN(valorTick) || valorTick <= 0) {
+                    addMessageRow("Error: Por favor, introduce valores válidos y positivos para los campos de Futuros (Margen, Comisión, Tick).", "error");
                     document.getElementById("riskAnalysisSection").style.display = "none";
                     return;
                 }
                 if (margenMantenimientoContrato >= margenInicialContrato) {
-                    addMessageRow(
-                        "Error: El Margen de Mantenimiento por Contrato debe ser menor que el Margen Inicial por Contrato.",
-                        "error"
-                    );
+                    addMessageRow("Error: El Margen de Mantenimiento por Contrato debe ser menor que el Margen Inicial por Contrato.", "error");
                     document.getElementById("riskAnalysisSection").style.display = "none";
                     return;
                 }
-
                 precioInicial = roundToTick(precioInicial, tamanoTick);
                 precioLimite = roundToTick(precioLimite, tamanoTick);
             }
-
-            if (
-                additionStrategy === "fixedUnits" &&
-                (isNaN(fixedUnitsToAdd) || fixedUnitsToAdd <= 0)
-            ) {
-                addMessageRow(
-                    'Error: Para "Mismo Número de Unidades por Fase", las unidades a añadir deben ser un valor positivo.',
-                    "error"
-                );
+            if (additionStrategy === "fixedUnits" && (isNaN(fixedUnitsToAdd) || fixedUnitsToAdd <= 0)) {
+                addMessageRow('Error: Para "Mismo Número de Unidades por Fase", las unidades a añadir deben ser un valor positivo.', "error");
                 document.getElementById("riskAnalysisSection").style.display = "none";
                 return;
             }
-
-            if (
-                additionStrategy === "fixedPctInitialCapital" &&
-                (isNaN(fixedPctInitialCapitalToAdd) ||
-                    fixedPctInitialCapitalToAdd <= 0 ||
-                    fixedPctInitialCapitalToAdd > 100)
-            ) {
-                addMessageRow(
-                    'Error: Para "Porcentaje Fijo del Capital Inicial por Fase", el porcentaje debe ser entre 0.1 y 100.',
-                    "error"
-                );
+            if (additionStrategy === "fixedPctInitialCapital" && (isNaN(fixedPctInitialCapitalToAdd) || fixedPctInitialCapitalToAdd <= 0 || fixedPctInitialCapitalToAdd > 100)) {
+                addMessageRow('Error: Para "Porcentaje Fijo del Capital Inicial por Fase", el porcentaje debe ser entre 0.1 y 100.', "error");
                 document.getElementById("riskAnalysisSection").style.display = "none";
                 return;
             }
-
-            // Variables iniciales
             let capitalActual = capitalMaximo;
             let unidadesTotales = 0;
             let inversionAcumulada = 0;
@@ -839,23 +714,13 @@
             let operacionCount = 0;
             let hasMarginCallOccurred = false;
             let totalComisiones = 0;
-
-            // Primera operación
             let inversionInicialReal = 0;
             let margenReqPrimeraFase = 0;
             let comisionPrimeraFase = unidadesIniciales * comisionContrato;
-
             if (assetType === "acciones") {
                 inversionInicialReal = unidadesIniciales * precioInicial;
                 if (inversionInicialReal > capitalActual) {
-                    addMessageRow(
-                        `Error: La inversión inicial (${formatCurrency(
-                            inversionInicialReal
-                        )}) excede el capital/margen máximo total (${formatCurrency(
-                            capitalActual
-                        )}). Ajusta tu capital o la cantidad de unidades iniciales.`,
-                        "error"
-                    );
+                    addMessageRow(`Error: La inversión inicial (${formatCurrency(inversionInicialReal)}) excede el capital/margen máximo total (${formatCurrency(capitalActual)}). Ajusta tu capital o la cantidad de unidades iniciales.`, "error");
                     document.getElementById("riskAnalysisSection").style.display = "none";
                     return;
                 }
@@ -864,16 +729,7 @@
             } else {
                 margenReqPrimeraFase = unidadesIniciales * margenInicialContrato;
                 if (margenReqPrimeraFase + comisionPrimeraFase > capitalActual) {
-                    addMessageRow(
-                        `Error: El margen inicial requerido para la 1ª operación (${formatCurrency(
-                            margenReqPrimeraFase
-                        )}) más comisiones (${formatCurrency(
-                            comisionPrimeraFase
-                        )}) excede el Capital/Margen Máximo Total (${formatCurrency(
-                            capitalActual
-                        )}).`,
-                        "error"
-                    );
+                    addMessageRow(`Error: El margen inicial requerido para la 1ª operación (${formatCurrency(margenReqPrimeraFase)}) más comisiones (${formatCurrency(comisionPrimeraFase)}) excede el Capital/Margen Máximo Total (${formatCurrency(capitalActual)}).`, "error");
                     document.getElementById("riskAnalysisSection").style.display = "none";
                     return;
                 }
@@ -881,213 +737,94 @@
                 inversionAcumulada = margenReqPrimeraFase;
                 totalComisiones += comisionPrimeraFase;
             }
-
             unidadesTotales = unidadesIniciales;
-
-            // Cálculo unidades retenidas y cierre
-            let cantidadUnidadesARetener =
-                assetType === "acciones"
-                    ? unidadesTotales * (porcUnidadesARetener / 100)
-                    : 0;
+            let cantidadUnidadesARetener = assetType === "acciones" ? unidadesTotales * (porcUnidadesARetener / 100) : 0;
             let unidadesACerrar = unidadesTotales - cantidadUnidadesARetener;
-
-            // Precio objetivo y ganancia esperada inicial
             let precioObjetivoParaCerrar;
             let gananciaTotalEsperada;
-
             if (assetType === "acciones") {
                 precioObjetivoParaCerrar = precioPromedio * (1 + gananciaDeseada / 100);
-                gananciaTotalEsperada =
-                    unidadesACerrar * precioObjetivoParaCerrar -
-                    inversionAcumulada * (unidadesACerrar / unidadesTotales);
+                gananciaTotalEsperada = unidadesACerrar * precioObjetivoParaCerrar - inversionAcumulada * (unidadesACerrar / unidadesTotales);
             } else {
                 if (operationType === "long") {
-                    precioObjetivoParaCerrar =
-                        precioPromedio * (1 + gananciaDeseada / 100);
-                    gananciaTotalEsperada =
-                        unidadesACerrar *
-                            (precioObjetivoParaCerrar - precioPromedio) *
-                            (valorTick / tamanoTick) -
-                        unidadesACerrar * comisionContrato;
+                    precioObjetivoParaCerrar = precioPromedio * (1 + gananciaDeseada / 100);
+                    gananciaTotalEsperada = unidadesACerrar * (precioObjetivoParaCerrar - precioPromedio) * (valorTick / tamanoTick) - unidadesACerrar * comisionContrato;
                 } else {
-                    precioObjetivoParaCerrar =
-                        precioPromedio * (1 - gananciaDeseada / 100);
-                    gananciaTotalEsperada =
-                        unidadesACerrar *
-                            (precioPromedio - precioObjetivoParaCerrar) *
-                            (valorTick / tamanoTick) -
-                        unidadesACerrar * comisionContrato;
+                    precioObjetivoParaCerrar = precioPromedio * (1 - gananciaDeseada / 100);
+                    gananciaTotalEsperada = unidadesACerrar * (precioPromedio - precioObjetivoParaCerrar) * (valorTick / tamanoTick) - unidadesACerrar * comisionContrato;
                 }
             }
             if (gananciaTotalEsperada < 0) gananciaTotalEsperada = 0;
-
-            // Agregar fila inicial a la tabla
-            const headerCount = parseInt(
-                document.getElementById("tableHeaders").dataset.columns || 13,
-                10
-            );
-
+            const headerCount = parseInt(document.getElementById("tableHeaders").dataset.columns || 13, 10);
             let firstRowCells = [];
             if (assetType === "acciones") {
-                firstRowCells = [
-                    "1ª Compra",
-                    formatNumber(unidadesIniciales, 0),
-                    formatNumber(unidadesTotales, 2),
-                    formatCurrency(capitalActual),
-                    `${formatNumber(porcUnidadesARetener, 1)}% (${formatNumber(
-                        cantidadUnidadesARetener,
-                        2
-                    )})`,
-                    formatCurrency(precioInicial),
-                    formatCurrency(inversionInicialReal),
-                    formatCurrency(inversionAcumulada),
-                    formatCurrency(precioPromedio),
-                    `<b>${formatCurrency(precioObjetivoParaCerrar)}</b>`,
-                    formatCurrency(gananciaTotalEsperada),
-                    "-",
-                    formatNumber(unidadesACerrar, 2),
-                ];
+                firstRowCells = [ "1ª Compra", formatNumber(unidadesIniciales, 0), formatNumber(unidadesTotales, 2), formatCurrency(capitalActual), `${formatNumber(porcUnidadesARetener, 1)}% (${formatNumber(cantidadUnidadesARetener, 2)})`, formatCurrency(precioInicial), formatCurrency(inversionInicialReal), formatCurrency(inversionAcumulada), formatCurrency(precioPromedio), `<b>${formatCurrency(precioObjetivoParaCerrar)}</b>`, formatCurrency(gananciaTotalEsperada), "-", formatNumber(unidadesACerrar, 2), ];
             } else {
-                firstRowCells = [
-                    operationType === "long" ? "1ª Compra Long" : "1ª Venta Corto",
-                    formatNumber(unidadesIniciales, 0),
-                    formatNumber(unidadesTotales, 0),
-                    formatCurrency(capitalActual),
-                    formatCurrency(unidadesTotales * margenMantenimientoContrato),
-                    formatCurrency(precioInicial),
-                    formatCurrency(margenReqPrimeraFase),
-                    formatCurrency(inversionAcumulada),
-                    formatCurrency(precioPromedio),
-                    `<b>${formatCurrency(
-                        roundToTick(precioObjetivoParaCerrar, tamanoTick)
-                    )}</b>`,
-                    formatCurrency(gananciaTotalEsperada),
-                    "-",
-                    formatNumber(unidadesACerrar, 0),
-                ];
+                firstRowCells = [ operationType === "long" ? "1ª Compra Long" : "1ª Venta Corto", formatNumber(unidadesIniciales, 0), formatNumber(unidadesTotales, 0), formatCurrency(capitalActual), formatCurrency(unidadesTotales * margenMantenimientoContrato), formatCurrency(precioInicial), formatCurrency(margenReqPrimeraFase), formatCurrency(inversionAcumulada), formatCurrency(precioPromedio), `<b>${formatCurrency(roundToTick(precioObjetivoParaCerrar, tamanoTick))}</b>`, formatCurrency(gananciaTotalEsperada), "-", formatNumber(unidadesACerrar, 0), ];
             }
             addResultRow(firstRowCells);
-
             let currentPrecio = precioInicial;
-
             const factorCambioLong = 1 - pctCambio / 100;
             const factorCambioShort = 1 + pctCambio / 100;
-
-            // Bucle para añadir fases sucesivas hasta límite o sin capital
             while (operacionCount < 500) {
                 operacionCount++;
-
                 let proximoPrecioOperacion;
                 if (operationType === "long") {
                     proximoPrecioOperacion = currentPrecio * factorCambioLong;
                 } else {
                     proximoPrecioOperacion = currentPrecio * factorCambioShort;
                 }
-
                 if (assetType === "futuros") {
                     proximoPrecioOperacion = roundToTick(proximoPrecioOperacion, tamanoTick);
                 }
-
                 if (operationType === "long" && proximoPrecioOperacion <= 0.001) {
                     proximoPrecioOperacion = 0.001;
                 }
-
-                // Condición de parada: próximo precio cruza límite
-                const willHitLimit =
-                    operationType === "long"
-                        ? proximoPrecioOperacion < precioLimite
-                        : proximoPrecioOperacion > precioLimite;
-
-                if (
-                    (operationType === "long" && proximoPrecioOperacion < precioLimite) ||
-                    (operationType === "short" && proximoPrecioOperacion > precioLimite)
-                ) {
-                    const message =
-                        operationType === "long"
-                            ? `Simulación finalizada: El precio proyectado (${formatCurrency(
-                                  proximoPrecioOperacion
-                              )}) está por debajo del <strong>Precio Límite de Compra</strong> (${formatCurrency(
-                                  precioLimite
-                              )}).`
-                            : `Simulación finalizada: El precio proyectado (${formatCurrency(
-                                  proximoPrecioOperacion
-                              )}) está por encima del <strong>Precio Límite de Venta</strong> (${formatCurrency(
-                                  precioLimite
-                              )}).`;
+                const willHitLimit = operationType === "long" ? proximoPrecioOperacion < precioLimite : proximoPrecioOperacion > precioLimite;
+                if ((operationType === "long" && proximoPrecioOperacion < precioLimite) || (operationType === "short" && proximoPrecioOperacion > precioLimite)) {
+                    const message = operationType === "long" ? `Simulación finalizada: El precio proyectado (${formatCurrency(proximoPrecioOperacion)}) está por debajo del <strong>Precio Límite de Compra</strong> (${formatCurrency(precioLimite)}).` : `Simulación finalizada: El precio proyectado (${formatCurrency(proximoPrecioOperacion)}) está por encima del <strong>Precio Límite de Venta</strong> (${formatCurrency(precioLimite)}).`;
                     addMessageRow(message, "warning");
                     break;
                 }
-
-                // Unidades a añadir según estrategia
                 let unidadesAdicionales = 0;
                 let inversionEnFase = 0;
                 let comisionEnFase = 0;
-
                 if (additionStrategy === "distributeCapital") {
                     let tempPrecioForEstimate = proximoPrecioOperacion;
                     let estimatedRemainingOperations = 0;
-
-                    // Estimación optimista número operaciones futuras posibles
                     for (let i = 0; i < 200 && tempPrecioForEstimate > 0.001; i++) {
-                        let nextTempPrice =
-                            operationType === "long"
-                                ? tempPrecioForEstimate * factorCambioLong
-                                : tempPrecioForEstimate * factorCambioShort;
+                        let nextTempPrice = operationType === "long" ? tempPrecioForEstimate * factorCambioLong : tempPrecioForEstimate * factorCambioShort;
                         if (assetType === "futuros") {
                             nextTempPrice = roundToTick(nextTempPrice, tamanoTick);
                         }
-                        const tempWillHitLimit =
-                            operationType === "long"
-                                ? nextTempPrice < precioLimite
-                                : nextTempPrice > precioLimite;
+                        const tempWillHitLimit = operationType === "long" ? nextTempPrice < precioLimite : nextTempPrice > precioLimite;
                         if (tempWillHitLimit) break;
-
                         estimatedRemainingOperations++;
                         tempPrecioForEstimate = nextTempPrice;
                     }
-
-                    const avgCost =
-                        assetType === "acciones"
-                            ? proximoPrecioOperacion
-                            : margenInicialContrato + comisionContrato;
-                    const maxOpsByCapital =
-                        Math.max(1, Math.floor(capitalActual / avgCost)) || 1;
-
-                    const effectiveFutureOperations = Math.min(
-                        Math.max(1, estimatedRemainingOperations),
-                        maxOpsByCapital
-                    );
-
+                    const avgCost = assetType === "acciones" ? proximoPrecioOperacion : margenInicialContrato + comisionContrato;
+                    const maxOpsByCapital = Math.max(1, Math.floor(capitalActual / avgCost)) || 1;
+                    const effectiveFutureOperations = Math.min(Math.max(1, estimatedRemainingOperations), maxOpsByCapital);
                     const capitalToDistribute = capitalActual;
                     const inversionObjetivoPorFase = capitalToDistribute / effectiveFutureOperations;
-
                     if (assetType === "acciones") {
                         unidadesAdicionales = Math.floor(inversionObjetivoPorFase / proximoPrecioOperacion);
                     } else {
-                        unidadesAdicionales = Math.floor(
-                            inversionObjetivoPorFase / (margenInicialContrato + comisionContrato)
-                        );
+                        unidadesAdicionales = Math.floor(inversionObjetivoPorFase / (margenInicialContrato + comisionContrato));
                     }
                 } else if (additionStrategy === "fixedUnits") {
                     unidadesAdicionales = fixedUnitsToAdd;
                 } else if (additionStrategy === "fixedPctInitialCapital") {
-                    const inversionObjetivoPorFasePct =
-                        capitalMaximo * (fixedPctInitialCapitalToAdd / 100);
+                    const inversionObjetivoPorFasePct = capitalMaximo * (fixedPctInitialCapitalToAdd / 100);
                     if (assetType === "acciones") {
-                        unidadesAdicionales = Math.floor(
-                            inversionObjetivoPorFasePct / proximoPrecioOperacion
-                        );
+                        unidadesAdicionales = Math.floor(inversionObjetivoPorFasePct / proximoPrecioOperacion);
                     } else {
-                        unidadesAdicionales = Math.floor(
-                            inversionObjetivoPorFasePct / (margenInicialContrato + comisionContrato)
-                        );
+                        unidadesAdicionales = Math.floor(inversionObjetivoPorFasePct / (margenInicialContrato + comisionContrato));
                     }
                 } else if (additionStrategy === "growingUnits") {
                     unidadesAdicionales = unidadesIniciales + operacionCount;
                 }
-
                 unidadesAdicionales = Math.max(0, unidadesAdicionales);
-
                 if (assetType === "acciones") {
                     inversionEnFase = unidadesAdicionales * proximoPrecioOperacion;
                     comisionEnFase = 0;
@@ -1095,164 +832,66 @@
                     inversionEnFase = unidadesAdicionales * margenInicialContrato;
                     comisionEnFase = unidadesAdicionales * comisionContrato;
                 }
-
-                if (
-                    unidadesAdicionales === 0 ||
-                    inversionEnFase + comisionEnFase > capitalActual
-                ) {
-                    addMessageRow(
-                        `Simulación finalizada: Capital/Margen insuficiente (${formatCurrency(
-                            capitalActual
-                        )}) para añadir más unidades/contratos.`,
-                        "warning"
-                    );
+                if (unidadesAdicionales === 0 || inversionEnFase + comisionEnFase > capitalActual) {
+                    addMessageRow(`Simulación finalizada: Capital/Margen insuficiente (${formatCurrency(capitalActual)}) para añadir más unidades/contratos.`, "warning");
                     break;
                 }
-
-                // Actualización vars estado
                 const prevInversion = inversionAcumulada;
                 const prevUnidades = unidadesTotales;
-
                 capitalActual -= inversionEnFase + comisionEnFase;
                 unidadesTotales += unidadesAdicionales;
                 totalComisiones += comisionEnFase;
-
                 if (assetType === "acciones") {
                     inversionAcumulada += inversionEnFase;
-                    precioPromedio =
-                        unidadesTotales > 0 ? inversionAcumulada / unidadesTotales : 0;
+                    precioPromedio = unidadesTotales > 0 ? inversionAcumulada / unidadesTotales : 0;
                 } else {
                     inversionAcumulada += inversionEnFase;
-                    precioPromedio =
-                        unidadesTotales > 0
-                            ? (precioPromedio * prevUnidades +
-                                  proximoPrecioOperacion * unidadesAdicionales) /
-                              unidadesTotales
-                            : 0;
+                    precioPromedio = unidadesTotales > 0 ? (precioPromedio * prevUnidades + proximoPrecioOperacion * unidadesAdicionales) / unidadesTotales : 0;
                 }
-
                 currentPrecio = proximoPrecioOperacion;
-
-                const currentUnidadesARetener =
-                    assetType === "acciones"
-                        ? unidadesTotales * (porcUnidadesARetener / 100)
-                        : 0;
+                const currentUnidadesARetener = assetType === "acciones" ? unidadesTotales * (porcUnidadesARetener / 100) : 0;
                 unidadesACerrar = unidadesTotales - currentUnidadesARetener;
-
-                // Revisión margen call para futuros
                 let isMarginCall = false;
                 if (assetType === "futuros") {
-                    const margenMantenimientoTotalReq =
-                        unidadesTotales * margenMantenimientoContrato;
+                    const margenMantenimientoTotalReq = unidadesTotales * margenMantenimientoContrato;
                     if (capitalActual < margenMantenimientoTotalReq && !hasMarginCallOccurred) {
                         isMarginCall = true;
                         hasMarginCallOccurred = true;
                     }
                 }
-
-                // Recalcular ganancia y precio objetivo
                 if (assetType === "acciones") {
                     precioObjetivoParaCerrar = precioPromedio * (1 + gananciaDeseada / 100);
-                    gananciaTotalEsperada =
-                        unidadesACerrar * precioObjetivoParaCerrar -
-                        inversionAcumulada * (unidadesACerrar / unidadesTotales);
+                    gananciaTotalEsperada = unidadesACerrar * precioObjetivoParaCerrar - inversionAcumulada * (unidadesACerrar / unidadesTotales);
                 } else {
                     if (operationType === "long") {
-                        precioObjetivoParaCerrar =
-                            precioPromedio * (1 + gananciaDeseada / 100);
-                        gananciaTotalEsperada =
-                            unidadesACerrar *
-                                (precioObjetivoParaCerrar - precioPromedio) *
-                                (valorTick / tamanoTick) -
-                            unidadesACerrar * comisionContrato;
+                        precioObjetivoParaCerrar = precioPromedio * (1 + gananciaDeseada / 100);
+                        gananciaTotalEsperada = unidadesACerrar * (precioObjetivoParaCerrar - precioPromedio) * (valorTick / tamanoTick) - unidadesACerrar * comisionContrato;
                     } else {
-                        precioObjetivoParaCerrar =
-                            precioPromedio * (1 - gananciaDeseada / 100);
-                        gananciaTotalEsperada =
-                            unidadesACerrar *
-                                (precioPromedio - precioObjetivoParaCerrar) *
-                                (valorTick / tamanoTick) -
-                            unidadesACerrar * comisionContrato;
+                        precioObjetivoParaCerrar = precioPromedio * (1 - gananciaDeseada / 100);
+                        gananciaTotalEsperada = unidadesACerrar * (precioPromedio - precioObjetivoParaCerrar) * (valorTick / tamanoTick) - unidadesACerrar * comisionContrato;
                     }
                 }
                 if (gananciaTotalEsperada < 0) gananciaTotalEsperada = 0;
-
-                // Preparar fila y agregarla
                 let cells = [];
-
                 if (assetType === "acciones") {
-                    cells = [
-                        `Añadir Compra #${operacionCount}`,
-                        formatNumber(unidadesAdicionales, 2),
-                        formatNumber(unidadesTotales, 2),
-                        formatCurrency(capitalActual),
-                        `${formatNumber(porcUnidadesARetener, 1)}% (${formatNumber(
-                            currentUnidadesARetener,
-                            2
-                        )})`,
-                        formatCurrency(proximoPrecioOperacion),
-                        formatCurrency(inversionEnFase),
-                        formatCurrency(inversionAcumulada),
-                        formatCurrency(precioPromedio),
-                        `<b>${formatCurrency(precioObjetivoParaCerrar)}</b>`,
-                        formatCurrency(gananciaTotalEsperada),
-                        `${formatNumber(pctCambio)}%`,
-                        formatNumber(unidadesACerrar, 2),
-                    ];
+                    cells = [ `Añadir Compra #${operacionCount}`, formatNumber(unidadesAdicionales, 2), formatNumber(unidadesTotales, 2), formatCurrency(capitalActual), `${formatNumber(porcUnidadesARetener, 1)}% (${formatNumber(currentUnidadesARetener,2)})`, formatCurrency(proximoPrecioOperacion), formatCurrency(inversionEnFase), formatCurrency(inversionAcumulada), formatCurrency(precioPromedio), `<b>${formatCurrency(precioObjetivoParaCerrar)}</b>`, formatCurrency(gananciaTotalEsperada), `${formatNumber(pctCambio)}%`, formatNumber(unidadesACerrar, 2), ];
                 } else {
-                    cells = [
-                        operationType === "long"
-                            ? `Recompra Long #${operacionCount}`
-                            : `Añadir Corto #${operacionCount}`,
-                        formatNumber(unidadesAdicionales, 0),
-                        formatNumber(unidadesTotales, 0),
-                        formatCurrency(capitalActual),
-                        formatCurrency(unidadesTotales * margenMantenimientoContrato),
-                        formatCurrency(proximoPrecioOperacion),
-                        formatCurrency(inversionEnFase),
-                        formatCurrency(inversionAcumulada),
-                        formatCurrency(precioPromedio),
-                        `<b>${formatCurrency(
-                            roundToTick(precioObjetivoParaCerrar, tamanoTick)
-                        )}</b>`,
-                        formatCurrency(gananciaTotalEsperada),
-                        `${formatNumber(pctCambio)}%`,
-                        formatNumber(unidadesACerrar, 0),
-                    ];
+                    cells = [ operationType === "long" ? `Recompra Long #${operacionCount}` : `Añadir Corto #${operacionCount}`, formatNumber(unidadesAdicionales, 0), formatNumber(unidadesTotales, 0), formatCurrency(capitalActual), formatCurrency(unidadesTotales * margenMantenimientoContrato), formatCurrency(proximoPrecioOperacion), formatCurrency(inversionEnFase), formatCurrency(inversionAcumulada), formatCurrency(precioPromedio), `<b>${formatCurrency(roundToTick(precioObjetivoParaCerrar, tamanoTick))}</b>`, formatCurrency(gananciaTotalEsperada), `${formatNumber(pctCambio)}%`, formatNumber(unidadesACerrar, 0), ];
                 }
-
                 addResultRow(cells, isMarginCall);
             }
-
-            // Mostrar análisis de riesgos
             showRiskAnalysis(assetType, operationType, pctCambio, capitalMaximo, capitalActual);
         }
 
-        // -----------------------
-        // ANÁLISIS DE RIESGOS
-        // -----------------------
         function showRiskAnalysis(assetType, operationType, pctCambio, capitalInicial, capitalFinal) {
             const section = document.getElementById("riskAnalysisSection");
             section.style.display = "block";
-
             const title = document.getElementById("riskAnalysisTitle");
-            title.textContent = `Análisis de Riesgos Clave (${
-                assetType === "acciones"
-                    ? "Acciones (Estrategia Long)"
-                    : operationType === "long"
-                    ? "Futuros Long"
-                    : "Futuros Short"
-            })`;
-
+            title.textContent = `Análisis de Riesgos Clave (${assetType === "acciones" ? "Acciones (Estrategia Long)" : operationType === "long" ? "Futuros Long" : "Futuros Short"})`;
             let html = "<ul>";
-
             if (assetType === "acciones") {
                 html += `
-                    <li><strong>Gestión del Capital:</strong> Se distribuye el capital en múltiples compras sucesivas cuando el precio cae el <strong>${formatNumber(pctCambio)}%</strong>, hasta agotar el capital máximo <strong>${formatCurrency(
-                    capitalInicial
-                )}</strong> o alcanzar el precio límite. Capital restante final: <strong>${formatCurrency(
-                    capitalFinal
-                )}</strong>.</li>
+                    <li><strong>Gestión del Capital:</strong> Se distribuye el capital en múltiples compras sucesivas cuando el precio cae el <strong>${formatNumber(pctCambio)}%</strong>, hasta agotar el capital máximo <strong>${formatCurrency(capitalInicial)}</strong> o alcanzar el precio límite. Capital restante final: <strong>${formatCurrency(capitalFinal)}</strong>.</li>
                     <li><strong>Dependencia de la Recuperación:</strong> El éxito depende de que el precio se recupere y supere el precio de venta necesario para cerrar con ganancia.</li>
                     <li><strong>Riesgo de "Añadir a Posición Perdedora":</strong> Promediar a la baja puede amplificar pérdidas si la tendencia bajista es fuerte.</li>
                     <li><strong>Inmovilización de Capital:</strong> Si el precio no se recupera, el capital queda bloqueado limitando otras inversiones.</li>
@@ -1266,9 +905,7 @@
                     <li><strong>Volatilidad:</strong> Los futuros pueden tener movimientos rápidos que amplifican ganancias o pérdidas, aumentando el riesgo.</li>
                 `;
             }
-
             html += "</ul>";
-
             document.getElementById("riskContent").innerHTML = html;
         }
     </script>

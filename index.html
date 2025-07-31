@@ -103,35 +103,35 @@
         <form id="simulationForm" class="form-grid">
             <div class="form-group">
                 <label for="capitalMaximo">Capital Máximo Total (€):</label>
-                <input type="number" id="capitalMaximo" value="10000" step="1000">
+                <input type="number" id="capitalMaximo" value="10000" step="1000" min="0">
             </div>
             <div class="form-group">
                 <label for="numRecompras">Nº de Recompras Adicionales:</label>
-                <input type="number" id="numRecompras" value="4">
+                <input type="number" id="numRecompras" value="4" min="0">
             </div>
             <div class="form-group">
                 <label for="caidaRecompra">% Caída para Recompra (PCx):</label>
-                <input type="number" id="caidaRecompra" value="10" step="0.5">
+                <input type="number" id="caidaRecompra" value="10" step="0.5" min="0.1" max="99.9">
             </div>
             <div class="form-group">
                 <label for="precioMinimo">Precio Mínimo de Compra (€):</label>
-                <input type="number" id="precioMinimo" value="5" step="0.1">
+                <input type="number" id="precioMinimo" value="5" step="0.1" min="0.01">
             </div>
             <div class="form-group">
                 <label for="gananciaDeseada">% Ganancia Adicional Deseado:</label>
-                <input type="number" id="gananciaDeseada" value="15" step="1">
+                <input type="number" id="gananciaDeseada" value="15" step="1" min="0.1">
             </div>
             <div class="form-group">
                 <label for="accionesGratuitas">% Acciones 'Gratuitas' a Conservar:</label>
-                <input type="number" id="accionesGratuitas" value="10" step="1">
+                <input type="number" id="accionesGratuitas" value="10" step="1" min="0" max="99.9">
             </div>
              <div class="form-group">
                 <label for="accionesIniciales">Acciones (Primera Compra):</label>
-                <input type="number" id="accionesIniciales" value="50">
+                <input type="number" id="accionesIniciales" value="50" min="1">
             </div>
             <div class="form-group">
                 <label for="precioInicial">Precio por Acción (Primera Compra) (€):</label>
-                <input type="number" id="precioInicial" value="20" step="0.1">
+                <input type="number" id="precioInicial" value="20" step="0.1" min="0.01">
             </div>
             <button type="button" onclick="runSimulation()">Calcular Simulación</button>
         </form>
@@ -153,7 +153,7 @@
                         <th>Inversión Acumulada (€)</th>
                         <th>PPM (€)</th>
                         <th>Precio Venta Necesario (€)</th>
-                        <th>Caída % (desde anterior)</th>
+                        <th>Ganancia Total al Vender (€)</th> <th>Caída % (desde anterior)</th>
                         <th>Acciones a Vender</th>
                     </tr>
                 </thead>
@@ -176,6 +176,10 @@ function formatCurrency(value) {
 }
 
 function formatNumber(value, decimals = 2) {
+    // Check if value is a valid number before formatting
+    if (isNaN(value) || !isFinite(value)) {
+        return '-'; // Or 'N/A', or an empty string, depending on desired display for invalid numbers
+    }
     return value.toLocaleString('es-ES', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
@@ -193,6 +197,21 @@ function runSimulation() {
     const resultsTableBody = document.getElementById('resultsTableBody');
     resultsTableBody.innerHTML = ''; // Limpiar resultados anteriores
 
+    // Basic input validation
+    if (isNaN(capitalMaximo) || capitalMaximo <= 0 ||
+        isNaN(numRecompras) || numRecompras < 0 ||
+        isNaN(pcx) || pcx <= 0 || pcx >= 100 || 
+        isNaN(precioMinimo) || precioMinimo <= 0 ||
+        isNaN(gananciaDeseada) || gananciaDeseada <= 0 || 
+        isNaN(porcAccionesGratuitas) || porcAccionesGratuitas < 0 || porcAccionesGratuitas >= 100 || 
+        isNaN(accionesIniciales) || accionesIniciales <= 0 ||
+        isNaN(precioInicial) || precioInicial <= 0) {
+        resultsTableBody.innerHTML = `<tr><td colspan="13" style="color: red; text-align: center;">Error: Por favor, introduce valores válidos y positivos en todos los campos. Los porcentajes deben estar entre 0 y 100 (excluyendo 100).</td></tr>`;
+        document.getElementById('riskAnalysisSection').style.display = 'none'; // Hide risk section on error
+        return;
+    }
+
+
     let capitalRestante = capitalMaximo;
     let accionesTotales = 0;
     let inversionAcumulada = 0;
@@ -201,7 +220,8 @@ function runSimulation() {
     // 2. FASE 0: PRIMERA COMPRA
     const inversionInicial = accionesIniciales * precioInicial;
     if (inversionInicial > capitalMaximo) {
-        resultsTableBody.innerHTML = `<tr><td colspan="12">Error: La inversión inicial (${formatCurrency(inversionInicial)}) excede el capital máximo total (${formatCurrency(capitalMaximo)}).</td></tr>`;
+        resultsTableBody.innerHTML = `<tr><td colspan="13" style="color: red; text-align: center;">Error: La inversión inicial (${formatCurrency(inversionInicial)}) excede el capital máximo total (${formatCurrency(capitalMaximo)}).</td></tr>`;
+        document.getElementById('riskAnalysisSection').style.display = 'none'; // Hide risk section on error
         return;
     }
 
@@ -217,6 +237,10 @@ function runSimulation() {
     let accionesAVender = accionesTotales - cantidadAccionesGratuitas;
     let precioVentaNecesario = accionesAVender > 0 ? capitalObjetivo / accionesAVender : 0;
     
+    // Nueva variable para la ganancia total esperada
+    let gananciaTotalEsperada = capitalObjetivo - inversionAcumulada;
+    if (gananciaTotalEsperada < 0) gananciaTotalEsperada = 0; 
+
     // Añadir fila a la tabla
     let newRow = `<tr>
         <td>Primera Compra</td>
@@ -229,7 +253,7 @@ function runSimulation() {
         <td>${formatCurrency(inversionAcumulada)}</td>
         <td>${formatCurrency(ppm)}</td>
         <td><b>${formatCurrency(precioVentaNecesario)}</b></td>
-        <td>-</td>
+        <td>${formatCurrency(gananciaTotalEsperada)}</td> <td>-</td>
         <td>${formatNumber(accionesAVender, 2)}</td>
     </tr>`;
     resultsTableBody.innerHTML += newRow;
@@ -240,7 +264,7 @@ function runSimulation() {
         const precioRecompra = precioAnterior * (1 - pcx / 100);
 
         if (precioRecompra < precioMinimo) {
-            resultsTableBody.innerHTML += `<tr><td colspan="12">Fase PC${i} cancelada: El precio (${formatCurrency(precioRecompra)}) es inferior al mínimo de compra (${formatCurrency(precioMinimo)}).</td></tr>`;
+            resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Fase PC${i} cancelada: El precio de recompra (${formatCurrency(precioRecompra)}) es inferior al mínimo de compra (${formatCurrency(precioMinimo)}).</td></tr>`;
             break;
         }
 
@@ -248,7 +272,7 @@ function runSimulation() {
         let inversionEnFase = capitalRestante / recomprasRestantes;
 
         if (inversionEnFase <= 0) {
-            resultsTableBody.innerHTML += `<tr><td colspan="12">Fase PC${i} cancelada: Capital insuficiente para continuar.</td></tr>`;
+            resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Fase PC${i} cancelada: Capital insuficiente para continuar las recompras.</td></tr>`;
             break;
         }
         
@@ -267,6 +291,10 @@ function runSimulation() {
         accionesAVender = accionesTotales - cantidadAccionesGratuitas;
         precioVentaNecesario = accionesAVender > 0 ? capitalObjetivo / accionesAVender : 0;
 
+        // Nueva variable para la ganancia total esperada en esta fase
+        gananciaTotalEsperada = capitalObjetivo - inversionAcumulada;
+        if (gananciaTotalEsperada < 0) gananciaTotalEsperada = 0; 
+
         // Añadir fila a la tabla
         newRow = `<tr>
             <td>Recompra PC${i}</td>
@@ -279,7 +307,7 @@ function runSimulation() {
             <td>${formatCurrency(inversionAcumulada)}</td>
             <td>${formatCurrency(ppm)}</td>
             <td><b>${formatCurrency(precioVentaNecesario)}</b></td>
-            <td>${formatNumber(pcx)}%</td>
+            <td>${formatCurrency(gananciaTotalEsperada)}</td> <td>${formatNumber(pcx)}%</td>
             <td>${formatNumber(accionesAVender, 2)}</td>
         </tr>`;
         resultsTableBody.innerHTML += newRow;

@@ -90,7 +90,6 @@
             background-color: #fffbe6;
             border-left: 5px solid #f39c12;
         }
-        /* La sección de chart-container ya no es necesaria, pero dejo la referencia del estilo por si se quiere añadir algo en el futuro */
     </style>
 </head>
 <body>
@@ -169,7 +168,7 @@
 </div>
 
 <script>
-// La variable global para Chart.js ya no es necesaria
+// No hay variable global para Chart.js ya que se eliminó la gráfica
 
 function formatCurrency(value) {
     return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
@@ -195,7 +194,7 @@ function runSimulation() {
     const resultsTableBody = document.getElementById('resultsTableBody');
     resultsTableBody.innerHTML = ''; // Limpiar resultados anteriores
 
-    // Limpiar y ocultar el análisis de riesgos (la parte del gráfico ya no existe)
+    // Limpiar y ocultar el análisis de riesgos
     document.getElementById('riskAnalysisSection').style.display = 'none';
 
     // Basic input validation
@@ -258,60 +257,59 @@ function runSimulation() {
     resultsTableBody.innerHTML += newRow;
 
 
-    // 3. FASES DE RECOMPRA (PC1, PC2, ...) - Ahora dinámico y distribuyendo el capital
+    // 3. FASES DE RECOMPRA (PC1, PC2, ...) - Ahora distribuyendo el capital
     while (true) {
         const proximoPrecioRecompra = precioAnterior * (1 - pcx / 100);
 
-        // Criterios de parada: Si el precio cae por debajo del mínimo, no comprar más.
+        // Criterios de parada principales
         if (proximoPrecioRecompra < precioMinimo) {
             resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: El precio de recompra proyectado (${formatCurrency(proximoPrecioRecompra)}) es inferior al mínimo de compra (${formatCurrency(precioMinimo)}).</td></tr>`;
             break;
         }
 
-        // Calcular cuántas recompras futuras "teóricas" son posibles hasta el precio mínimo
-        // Esto es para distribuir el capital restante de manera más equitativa.
-        let tempPrecio = proximoPrecioRecompra;
+        // Calcular cuántas recompras futuras "teóricas" son posibles
+        // Esto es crucial para distribuir el capital restante.
+        let tempPrecioParaCalculo = proximoPrecioRecompra;
         let recomprasPotencialesRestantes = 0;
-        while (tempPrecio >= precioMinimo && capitalRestante > 0) { // capitalRestante > 0 añadido para evitar bucles infinitos si precioMinimo es 0
+        let capitalNecesarioParaSiguienteCompra = proximoPrecioRecompra; // Mínimo para una acción
+        
+        // Loop para estimar cuántas compras más se pueden hacer hasta el precio mínimo.
+        // Se considera que cada "recompra potencial" necesitará al menos el coste de una acción a ese precio.
+        while (tempPrecioParaCalculo >= precioMinimo && recomprasPotencialesRestantes < 1000) { // Límite para evitar bucles infinitos
             recomprasPotencialesRestantes++;
-            tempPrecio *= (1 - pcx / 100);
-            // Si el siguiente precio es insignificante o si el salto es muy grande, salir
-            if (tempPrecio < 0.001) break; 
+            tempPrecioParaCalculo *= (1 - pcx / 100);
+            if (tempPrecioParaCalculo < 0.01) break; // Si el precio se vuelve insignificante, salir
         }
-
-        // Si no hay más recompras potenciales (debido a precio mínimo o caída)
-        // O si el capital restante es demasiado bajo para la siguiente recompra (usando el precio actual)
-        if (recomprasPotencialesRestantes === 0 || capitalRestante < proximoPrecioRecompra) {
-            resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Capital insuficiente o no hay más recompras viables hasta el precio mínimo.</td></tr>`;
+        
+        // Si no hay recompras potenciales, o si el capital es demasiado bajo para la primera de ellas
+        if (recomprasPotencialesRestantes === 0 || capitalRestante < capitalNecesarioParaSiguienteCompra) {
+            resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Capital insuficiente o no hay más recompras viables. Capital restante: ${formatCurrency(capitalRestante)}.</td></tr>`;
             break;
         }
-        
-        // Determinar la inversión en esta fase: capital restante dividido por las recompras que aún podemos hacer
-        // Aseguramos que sea al menos el costo de una acción al precio actual.
+
+        recompraCount++;
+
+        // Determinar la inversión para esta fase: distribuir el capital restante
+        // entre las recompras potenciales estimadas.
         let inversionEnFase = capitalRestante / recomprasPotencialesRestantes;
         
-        // Asegurarse de que la inversión en fase sea al menos el coste de 1 acción al precio actual
-        // y que no se invierta más capital del que queda.
+        // Asegurarse de que al menos se pueda comprar una acción si hay capital suficiente
         if (inversionEnFase < proximoPrecioRecompra && capitalRestante >= proximoPrecioRecompra) {
-            // Si la asignación equitativa es muy pequeña pero todavía podemos comprar al menos una acción,
-            // asigna lo suficiente para una acción o el resto del capital si es menor.
-            inversionEnFase = Math.min(capitalRestante, proximoPrecioRecompra); 
+            inversionEnFase = proximoPrecioRecompra; // Invertir al menos para 1 acción
         } else if (inversionEnFase < proximoPrecioRecompra && capitalRestante < proximoPrecioRecompra) {
-            // Si no hay suficiente capital para comprar ni siquiera 1 acción, detener.
-            resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Capital agotado o insuficiente para comprar más acciones.</td></tr>`;
+            // Si el capital no alcanza para una acción, se termina la simulación
+            resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Capital insuficiente para comprar más acciones al precio de ${formatCurrency(proximoPrecioRecompra)}.</td></tr>`;
             break;
         }
 
 
         const accionesCompradas = inversionEnFase / proximoPrecioRecompra;
         
-        // Si las acciones compradas son insignificantes (menos de una cantidad mínima), detener
-        if (accionesCompradas < 0.0001) { // Umbral muy pequeño para asegurar que no se detenga por decimales
+        // Si la cantidad de acciones compradas es insignificante, detener.
+        if (accionesCompradas < 0.0001) { 
              resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Cantidad de acciones a comprar insignificante.</td></tr>`;
              break;
         }
-
-        recompraCount++;
 
         // Actualizar totales
         capitalRestante -= inversionEnFase;

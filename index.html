@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulador de Estrategia de Inversión a Largo Plazo</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -91,13 +90,7 @@
             background-color: #fffbe6;
             border-left: 5px solid #f39c12;
         }
-        #chart-container {
-            margin-top: 30px;
-            padding: 15px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        }
+        /* La sección de chart-container ya no es necesaria, pero dejo la referencia del estilo por si se quiere añadir algo en el futuro */
     </style>
 </head>
 <body>
@@ -168,11 +161,6 @@
         </div>
     </div>
     
-    <div id="chart-container" style="display:none;">
-        <h2>Visualización Gráfica</h2>
-        <canvas id="investmentChart"></canvas>
-    </div>
-
     <div id="riskAnalysisSection" class="risk-analysis" style="display:none;">
         <h2>Análisis de Riesgos Clave</h2>
         <div id="riskContent"></div>
@@ -181,8 +169,7 @@
 </div>
 
 <script>
-// Variable global para mantener la instancia del gráfico Chart.js
-let investmentChartInstance = null;
+// La variable global para Chart.js ya no es necesaria
 
 function formatCurrency(value) {
     return value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
@@ -208,8 +195,7 @@ function runSimulation() {
     const resultsTableBody = document.getElementById('resultsTableBody');
     resultsTableBody.innerHTML = ''; // Limpiar resultados anteriores
 
-    // Limpiar y ocultar el gráfico y el análisis de riesgos
-    document.getElementById('chart-container').style.display = 'none';
+    // Limpiar y ocultar el análisis de riesgos (la parte del gráfico ya no existe)
     document.getElementById('riskAnalysisSection').style.display = 'none';
 
     // Basic input validation
@@ -230,12 +216,6 @@ function runSimulation() {
     let inversionAcumulada = 0;
     let precioAnterior = 0;
     let recompraCount = 0; // Para llevar la cuenta de las recompras realizadas
-
-    // Arrays para los datos del gráfico
-    const labels = [];
-    const ppmData = [];
-    const precioVentaNecesarioData = [];
-    const precioAccionData = []; 
 
     // 2. FASE 0: PRIMERA COMPRA
     const inversionInicial = accionesIniciales * precioInicial;
@@ -277,40 +257,61 @@ function runSimulation() {
     </tr>`;
     resultsTableBody.innerHTML += newRow;
 
-    // Añadir datos para el gráfico
-    labels.push("Primera Compra");
-    ppmData.push(ppm);
-    precioVentaNecesarioData.push(precioVentaNecesario);
-    precioAccionData.push(precioInicial);
 
-
-    // 3. FASES DE RECOMPRA (PC1, PC2, ...) - Ahora dinámico
+    // 3. FASES DE RECOMPRA (PC1, PC2, ...) - Ahora dinámico y distribuyendo el capital
     while (true) {
         const proximoPrecioRecompra = precioAnterior * (1 - pcx / 100);
 
-        // Criterios de parada
+        // Criterios de parada: Si el precio cae por debajo del mínimo, no comprar más.
         if (proximoPrecioRecompra < precioMinimo) {
             resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: El precio de recompra proyectado (${formatCurrency(proximoPrecioRecompra)}) es inferior al mínimo de compra (${formatCurrency(precioMinimo)}).</td></tr>`;
             break;
         }
 
-        // Si el capital restante es demasiado bajo para comprar al menos una acción
-        // o si el capital restante es cero o negativo
-        if (capitalRestante <= 0.01 || capitalRestante < proximoPrecioRecompra) {
-            resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Capital insuficiente para comprar más acciones al precio de ${formatCurrency(proximoPrecioRecompra)}.</td></tr>`;
+        // Calcular cuántas recompras futuras "teóricas" son posibles hasta el precio mínimo
+        // Esto es para distribuir el capital restante de manera más equitativa.
+        let tempPrecio = proximoPrecioRecompra;
+        let recomprasPotencialesRestantes = 0;
+        while (tempPrecio >= precioMinimo && capitalRestante > 0) { // capitalRestante > 0 añadido para evitar bucles infinitos si precioMinimo es 0
+            recomprasPotencialesRestantes++;
+            tempPrecio *= (1 - pcx / 100);
+            // Si el siguiente precio es insignificante o si el salto es muy grande, salir
+            if (tempPrecio < 0.001) break; 
+        }
+
+        // Si no hay más recompras potenciales (debido a precio mínimo o caída)
+        // O si el capital restante es demasiado bajo para la siguiente recompra (usando el precio actual)
+        if (recomprasPotencialesRestantes === 0 || capitalRestante < proximoPrecioRecompra) {
+            resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Capital insuficiente o no hay más recompras viables hasta el precio mínimo.</td></tr>`;
             break;
         }
         
-        recompraCount++;
-        let inversionEnFase = capitalRestante; // Se invierte todo el capital restante para la siguiente recompra
+        // Determinar la inversión en esta fase: capital restante dividido por las recompras que aún podemos hacer
+        // Aseguramos que sea al menos el costo de una acción al precio actual.
+        let inversionEnFase = capitalRestante / recomprasPotencialesRestantes;
+        
+        // Asegurarse de que la inversión en fase sea al menos el coste de 1 acción al precio actual
+        // y que no se invierta más capital del que queda.
+        if (inversionEnFase < proximoPrecioRecompra && capitalRestante >= proximoPrecioRecompra) {
+            // Si la asignación equitativa es muy pequeña pero todavía podemos comprar al menos una acción,
+            // asigna lo suficiente para una acción o el resto del capital si es menor.
+            inversionEnFase = Math.min(capitalRestante, proximoPrecioRecompra); 
+        } else if (inversionEnFase < proximoPrecioRecompra && capitalRestante < proximoPrecioRecompra) {
+            // Si no hay suficiente capital para comprar ni siquiera 1 acción, detener.
+            resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Capital agotado o insuficiente para comprar más acciones.</td></tr>`;
+            break;
+        }
+
 
         const accionesCompradas = inversionEnFase / proximoPrecioRecompra;
         
-        // Si las acciones compradas son insignificantes, detener (ej. menos de 0.001 de acción)
-        if (accionesCompradas < 0.001) { 
+        // Si las acciones compradas son insignificantes (menos de una cantidad mínima), detener
+        if (accionesCompradas < 0.0001) { // Umbral muy pequeño para asegurar que no se detenga por decimales
              resultsTableBody.innerHTML += `<tr><td colspan="13" style="color: orange; text-align: center;">Simulación finalizada: Cantidad de acciones a comprar insignificante.</td></tr>`;
              break;
         }
+
+        recompraCount++;
 
         // Actualizar totales
         capitalRestante -= inversionEnFase;
@@ -345,114 +346,13 @@ function runSimulation() {
             <td>${formatNumber(accionesAVender, 2)}</td>
         </tr>`;
         resultsTableBody.innerHTML += newRow;
-
-        // Añadir datos para el gráfico
-        labels.push(`PC${recompraCount}`);
-        ppmData.push(ppm);
-        precioVentaNecesarioData.push(precioVentaNecesario);
-        precioAccionData.push(proximoPrecioRecompra);
     }
     
-    // 4. MOSTRAR GRÁFICO
-    document.getElementById('chart-container').style.display = 'block';
-    const ctx = document.getElementById('investmentChart').getContext('2d');
-
-    // Destruye el gráfico anterior si existe para evitar superposiciones
-    if (investmentChartInstance) {
-        investmentChartInstance.destroy();
-    }
-
-    investmentChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'PPM (€)',
-                    data: ppmData,
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    tension: 0.2,
-                    fill: false,
-                    pointRadius: 5,
-                    pointHoverRadius: 7
-                },
-                {
-                    label: 'Precio Venta Necesario (€)',
-                    data: precioVentaNecesarioData,
-                    borderColor: 'rgb(255, 99, 132)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    tension: 0.2,
-                    fill: false,
-                    pointRadius: 5,
-                    pointHoverRadius: 7
-                },
-                {
-                    label: 'Precio de la Acción (€)',
-                    data: precioAccionData,
-                    borderColor: 'rgb(54, 162, 235)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    tension: 0.2,
-                    fill: false,
-                    pointRadius: 5,
-                    pointHoverRadius: 7
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                tooltip: {
-                    mode: 'index',
-                    intersect: false
-                },
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        color: '#333'
-                    }
-                },
-                title: {
-                    display: true,
-                    text: 'Evolución de Precios y Puntos de Venta',
-                    font: {
-                        size: 16
-                    },
-                    color: '#2c3e50'
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    title: {
-                        display: true,
-                        text: 'Valor (€)',
-                        color: '#555'
-                    },
-                    ticks: {
-                        callback: function(value, index, ticks) {
-                            return formatCurrency(value); // Formatear los ticks del eje Y como moneda
-                        }
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Fase de Inversión',
-                        color: '#555'
-                    }
-                }
-            }
-        }
-    });
-
-    // 5. MOSTRAR ANÁLISIS DE RIESGOS
+    // 4. MOSTRAR ANÁLISIS DE RIESGOS
     document.getElementById('riskAnalysisSection').style.display = 'block';
     document.getElementById('riskContent').innerHTML = `
         <ul>
-            <li><strong>Gestión del Capital:</strong> La estrategia ahora realiza el máximo número de recompras posibles, invirtiendo el capital restante en cada fase. Esto significa que todo el capital máximo (${formatCurrency(capitalMaximo)}) se asignará a compras hasta agotar el fondo o alcanzar el precio mínimo. El capital restante final es de <strong>${formatCurrency(capitalRestante)}</strong>, que es el remanente no utilizado o no asignable.</li>
+            <li><strong>Gestión del Capital:</strong> La estrategia ahora distribuye el capital de manera que se maximicen las recompras posibles hasta que se agote el capital o se alcance el precio mínimo. El capital restante final es de <strong>${formatCurrency(capitalRestante)}</strong>, que es el remanente no utilizado.</li>
             <li><strong>Riesgo de Concentración:</strong> Al invertir repetidamente en un único activo que está cayendo, aumentas la concentración y el riesgo específico de esa empresa o sector. Una falta de recuperación a largo plazo podría resultar en una pérdida significativa del capital invertido.</li>
             <li><strong>Dependencia de la Recuperación (Riesgo "No Vender con Pérdidas"):</strong> El principio de no vender por debajo del Precio Promedio de Compra (PPM) te protege de realizar pérdidas, pero te ata al activo indefinidamente si no recupera su valor. El capital permanece bloqueado, generando un alto coste de oportunidad. El éxito de la estrategia depende 100% de que el precio del activo eventualmente supere tu <strong>Precio de Venta Necesario</strong>.</li>
              <li><strong>Riesgo de "Cuchillo que Cae" (Catching a Falling Knife):</strong> Comprar activos en caídas sucesivas es arriesgado. Si la caída se debe a problemas fundamentales del activo (y no a una corrección de mercado), el precio podría no recuperarse nunca, invalidando la premisa de la estrategia.</li>
